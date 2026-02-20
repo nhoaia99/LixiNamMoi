@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Bốc Lì Xì </title>
+  <style>
+    :root { --red:#e53935; --gold:#fbc02d; --card:#fff; --muted:#666; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh;
+      background: linear-gradient(180deg, var(--gold), var(--red));
+      font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      display: flex; align-items: center; justify-content: center;
+      padding: env(safe-area-inset-top) 12px env(safe-area-inset-bottom);
+    }
+    .app {
+      width: 100%; max-width: 390px; background: var(--card);
+      border-radius: 24px; padding: 16px 12px 20px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.25);
+    }
+    .title { text-align:center; font-size: 22px; font-weight: 800; color: var(--red); }
+    .sub { text-align:center; color: var(--muted); font-size: 13px; margin: 6px 0 12px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+    .bao {
+      background: radial-gradient(circle at top, #ffb3b3, var(--red));
+      border-radius: 12px;
+      aspect-ratio: 3/4;
+      display: grid; place-items: center;
+      box-shadow: 0 8px 16px rgba(229,57,53,.35);
+      color: #fff; font-size: 26px;
+      cursor: pointer; user-select: none;
+      transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+      position: relative; overflow: hidden;
+    }
+    .bao:active { transform: translateY(1px) scale(.98); box-shadow: 0 4px 10px rgba(229,57,53,.35); }
+    .bao.opened { opacity: .5; pointer-events: none; }
+    .result {
+      margin-top: 12px; text-align:center;
+      font-size: 18px; font-weight: 800; color: #2e7d32; min-height: 26px;
+    }
+    .locked {
+      margin-top: 12px; text-align:center; color:#b71c1c; font-weight:700;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="title">🧧 Bốc Lì Xì</div>
+  
+    <div class="grid" id="grid"></div>
+
+    <div class="result" id="result"></div>
+    <div class="locked" id="locked" style="display:none;">
+    </div>
+  </div>
+
+  <script>
+    const prizes = [
+      { type: "money", value: 1000, label: "1.000đ", weight: 6 },
+      { type: "money", value: 2000, label: "2.000đ", weight: 6 },
+      { type: "money", value: 5000, label: "5.000đ", weight: 6 },
+      { type: "money", value: 10000, label: "10.000đ", weight: 6 },
+      { type: "money", value: 20000, label: "20.000đ", weight: 6 },
+      { type: "money", value: 50000, label: "50.000đ", weight: 5 },
+      { type: "money", value: 100000, label: "100.000đ", weight: 2 },
+      { type: "money", value: 200000, label: "200.000đ", weight: 1 },
+      { type: "task",  value: null,  label: "Gửi 1 tấm hình đáng yêu 🥰", weight: 2 },
+      { type: "special", value: null, label: "🎁 Món quà đặc biệt", weight: 1 }
+    ];
+
+    function weightedRandom(items) {
+      const total = items.reduce((s, i) => s + i.weight, 0);
+      let r = Math.random() * total;
+      for (const it of items) {
+        if ((r -= it.weight) <= 0) return it;
+      }
+      return items[items.length - 1];
+    }
+
+    const grid = document.getElementById("grid");
+    const result = document.getElementById("result");
+    const locked = document.getElementById("locked");
+
+    const KEY = "LIXI_ALREADY_PLAYED";
+
+    function renderLockedState() {
+      grid.innerHTML = "";
+      locked.style.display = "block";
+    }
+
+    // Nếu thiết bị đã bốc rồi -> khoá luôn
+    if (localStorage.getItem(KEY)) {
+      renderLockedState();
+    } else {
+      // Tạo 10 bao
+      for (let i = 0; i < 10; i++) {
+        const el = document.createElement("div");
+        el.className = "bao";
+        el.textContent = "🧧";
+        el.onclick = () => {
+          if (localStorage.getItem(KEY)) return;
+
+          const prize = weightedRandom(prizes);
+          el.classList.add("opened");
+
+          let text = "";
+          if (prize.type === "money") {
+            text = `🎉 Bạn trúng ${prize.label}`;
+          } else if (prize.type === "task") {
+            text = `📸 Nhiệm vụ: ${prize.label}`;
+          } else {
+            text = `🎁 Chúc mừng! ${prize.label}`;
+          }
+          result.textContent = text;
+
+          // Khoá thiết bị sau khi bốc 1 lần
+          localStorage.setItem(KEY, "1");
+
+          // Khoá toàn bộ các bao còn lại
+          setTimeout(renderLockedState, 600);
+        };
+        grid.appendChild(el);
+      }
+    }
+  </script>
+</body>
+</html>
